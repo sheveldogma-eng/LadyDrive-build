@@ -1,3 +1,4 @@
+
 name: Build LadyDrive APK
 
 on:
@@ -13,42 +14,28 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Extract project
-        run: |
-          unzip -q LadyDrive_Android_Project.zip -d source
-          find source -maxdepth 3 -type f | head -50
+        run: unzip -q LadyDrive_Android_Project.zip -d source
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
 
-      - name: Install SDK
+      - name: Install Android SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Build APK
-        run: |
-          PROJECT=$(find source -name gradlew -type f | head -1)
-          if [ -n "$PROJECT" ]; then
-            chmod +x "$PROJECT"
-            cd "$(dirname "$PROJECT")"
-            ./gradlew assembleDebug
-          else
-            echo "Gradle wrapper not found"
-            exit 1
-          fi
+        run: gradle --no-daemon -p source/LadyDrive_Android assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: LadyDrive-APK
-          path: source/**/app/build/outputs/apk/debug/*.apk
+          path: source/LadyDrive_Android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
