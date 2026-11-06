@@ -32,7 +32,61 @@ app.get("/", (req, res) => {
   });
 });
 
-app.post("/chat", async (req, res) => {
+
+app.get("/models-check", async (req, res) => {
+  const supplied = req.get("x-access-code") || "";
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(ACCESS_CODE || "");
+
+  if (!ACCESS_CODE || a.length !== b.length ||
+      !crypto.timingSafeEqual(a, b)) {
+    return res.status(401).json({
+      error: "Unauthorized"
+    });
+  }
+
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({
+      error: "Gemini API key missing"
+    });
+  }
+
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models",
+      {
+        headers: {
+          "x-goog-api-key": GEMINI_API_KEY
+        },
+        signal: AbortSignal.timeout(20000)
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(502).json({
+        error: "Model listing failed",
+        status: response.status
+      });
+    }
+
+    const data = await response.json();
+
+    res.json({
+      models: (data.models || [])
+        .filter(m =>
+          m.supportedGenerationMethods?.includes(
+            "generateContent"
+          )
+        )
+        .map(m => m.name)
+    });
+  } catch (error) {
+    res.status(502).json({
+      error: "Model listing request failed"
+    });
+  }
+});
+  
   try {
     if (!ACCESS_CODE || !GEMINI_API_KEY) {
       return res.status(503).json({
