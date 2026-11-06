@@ -126,10 +126,16 @@ app.post("/chat", async (req, res) => {
     }
 
     if (!response.ok) {
-      console.error("Gemini API failed:", response.status);
-      return res.status(502).json({
-        error: "Gemini API error: " + response.status
-      });
+  const errorBody = await response.text();
+
+  console.error("Gemini API failed:", {
+    status: response.status,
+    details: errorBody.slice(0, 3000)
+  });
+
+  return res.status(502).json({
+    error: "Gemini API error: " + response.status
+  });
     }
 
     const data = await response.json();
