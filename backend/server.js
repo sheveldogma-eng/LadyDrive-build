@@ -86,7 +86,7 @@ app.get("/models-check", async (req, res) => {
     });
   }
 });
-  
+  app.post("/chat", async (req, res) => {
   try {
     if (!ACCESS_CODE || !GEMINI_API_KEY) {
       return res.status(503).json({
